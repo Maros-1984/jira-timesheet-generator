@@ -17,7 +17,7 @@ import net.rcarz.jiraclient.WorkLog;
  */
 public class IssuesStats {
     /** Found issues for this stats date. */
-    private final Set<String> issues = new LinkedHashSet<>();
+    private final Set<String> issues = new LinkedHashSet<String>();
     /** Logged work in seconds for this date. */
     private int seconds;
 
