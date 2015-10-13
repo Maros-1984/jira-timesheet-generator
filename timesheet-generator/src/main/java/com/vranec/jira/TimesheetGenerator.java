@@ -9,9 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -51,17 +49,18 @@ public class TimesheetGenerator {
         String username = args[0];
         String password = args[1];
         Date startDate = DateUtils.truncate(new Date(), Calendar.MONTH);
-        if (args.length > 2) {
+        if (args.length > 2 && !"*".equals(args[2])) {
             int month = Integer.parseInt(args[2]) - 1;
             startDate = DateUtils.setMonths(startDate, month);
         }
+        boolean countLoggedWork = args.length > 3 && Boolean.parseBoolean(args[3]);
 
         try {
             JiraClient jira = prepareJiraClient(username, password);
-            Map<Date, Set<String>> timesheet = parseTimesheet(username, startDate, jira);
+            Map<Date, IssuesStats> timesheet = parseTimesheet(username, startDate, jira, countLoggedWork);
             System.out.println();
             System.out.println("Saving to CSV...");
-            saveToCsv(startDate, timesheet);
+            saveToCsv(startDate, timesheet, countLoggedWork, username);
             System.out.println();
             System.out.println("TIMESHEET GENERATED SUCCESSFULLY");
         } catch (JiraException ex) {
@@ -86,15 +85,19 @@ public class TimesheetGenerator {
      *            Starting date to start parsing.
      * @param jira
      *            JIRA REST API client.
+     * @param countLoggedWork
      * @return Timesheets based on JIRAs' changelogs.
      * @throws JiraException
      *             In case anything went wrong.
      */
-    private static Map<Date, Set<String>> parseTimesheet(String username, Date startDate, JiraClient jira)
-            throws JiraException {
-        Map<Date, Set<String>> timesheet = new HashMap<Date, Set<String>>();
-        SearchResult result = jira.searchIssues("updated >= '" + new SimpleDateFormat("yyyy-M-d").format(startDate)
-                + "' and (watcher = " + username + " or status changed by " + username + ")", "summary", "changelog");
+    private static Map<Date, IssuesStats> parseTimesheet(String username, Date startDate, JiraClient jira,
+            boolean countLoggedWork) throws JiraException {
+        Map<Date, IssuesStats> timesheet = new HashMap<Date, IssuesStats>();
+        String jql = "updated >= '" + new SimpleDateFormat("yyyy-M-d").format(startDate) + "' and (watcher = "
+                + username + " or status changed by " + username + ")";
+        System.out.println("Searching for issues by JQL: " + jql + "...");
+        SearchResult result = jira.searchIssues(jql, countLoggedWork ? "*all,-comment" : "summary", "changelog", 1000,
+                0);
 
         System.out.print("Parsing ");
         for (Issue issue : result.issues) {
@@ -103,9 +106,9 @@ public class TimesheetGenerator {
                 if (entry.getAuthor().getName().equals(username)) {
                     Date date = DateUtils.truncate(entry.getCreated(), Calendar.DATE);
                     if (!timesheet.containsKey(date)) {
-                        timesheet.put(date, new LinkedHashSet<String>());
+                        timesheet.put(date, new IssuesStats());
                     }
-                    timesheet.get(date).add(issue.getKey());
+                    timesheet.get(date).addIssue(date, issue, username);
                 }
             }
         }
@@ -153,15 +156,24 @@ public class TimesheetGenerator {
      *            Start date of the timesheets.
      * @param timesheet
      *            Timesheets themselves.
+     * @param countLoggedWork
+     *            Whether to count the logged work per day.
+     * @param username
+     *            Username making the timesheets.
      * @throws IOException
      *             In case writing CSV goes wrong.
      */
-    private static void saveToCsv(Date startDate, Map<Date, Set<String>> timesheet) throws IOException {
+    private static void saveToCsv(Date startDate, Map<Date, IssuesStats> timesheet, boolean countLoggedWork,
+            String username) throws IOException {
         FileWriter writer = null;
         try {
             writer = new FileWriter("vykaz.csv");
             CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withDelimiter(';'));
-            csv.printRecord("Datum", "Èinnost", "Hodin");
+            if (countLoggedWork) {
+                csv.printRecord("Datum", "Èinnost", "Hodin", null, "Zalogovaný èas");
+            } else {
+                csv.printRecord("Datum", "Èinnost", "Hodin");
+            }
             Date inMonth = DateUtils.addMonths(startDate, 1);
             if (inMonth.after(new Date())) {
                 inMonth = new Date();
@@ -170,11 +182,19 @@ public class TimesheetGenerator {
 
             for (Date date = startDate; date.before(inMonth); date = DateUtils.addDays(date, 1)) {
                 csv.print(simpleDateFormat.format(date));
-                Set<String> issues = timesheet.get(date);
+                IssuesStats issues = timesheet.get(date);
                 if (issues != null) {
-                    csv.print(issues.toString().replace("[", "").replace("]", ""));
+                    csv.print(issues.getIssues());
                     csv.print(8);
+
+                    if (countLoggedWork) {
+                        csv.print(null);
+                        csv.print(String.valueOf((issues.getLoggedSecondsOfWork() / 60 / 6) / (float) 10).replace('.',
+                                ','));
+                    }
                 } else {
+                    csv.print(null);
+                    csv.print(null);
                     csv.print(null);
                     csv.print(null);
                 }
