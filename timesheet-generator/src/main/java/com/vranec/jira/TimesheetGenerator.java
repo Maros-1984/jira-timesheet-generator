@@ -52,6 +52,9 @@ public class TimesheetGenerator {
         if (args.length > 2 && !"*".equals(args[2])) {
             int month = Integer.parseInt(args[2]) - 1;
             startDate = DateUtils.setMonths(startDate, month);
+            if (startDate.after(new Date())) {
+				startDate = DateUtils.addYears(startDate, -1);
+			}
         }
         boolean countLoggedWork = args.length > 3 && Boolean.parseBoolean(args[3]);
 
@@ -170,9 +173,9 @@ public class TimesheetGenerator {
             writer = new FileWriter("vykaz.csv");
             CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withDelimiter(';'));
             if (countLoggedWork) {
-                csv.printRecord("Datum", "Èinnost", "Hodin", null, "Zalogovaný èas");
+                csv.printRecord("Datum", "Ãˆinnost", "Hodin", null, "ZalogovanÃ½ Ã¨as");
             } else {
-                csv.printRecord("Datum", "Èinnost", "Hodin");
+                csv.printRecord("Datum", "Ãˆinnost", "Hodin");
             }
             Date inMonth = DateUtils.addMonths(startDate, 1);
             if (inMonth.after(new Date())) {
