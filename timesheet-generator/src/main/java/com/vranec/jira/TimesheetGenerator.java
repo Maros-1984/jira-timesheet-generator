@@ -53,8 +53,8 @@ public class TimesheetGenerator {
             int month = Integer.parseInt(args[2]) - 1;
             startDate = DateUtils.setMonths(startDate, month);
             if (startDate.after(new Date())) {
-				startDate = DateUtils.addYears(startDate, -1);
-			}
+                startDate = DateUtils.addYears(startDate, -1);
+            }
         }
         boolean countLoggedWork = args.length > 3 && Boolean.parseBoolean(args[3]);
 
