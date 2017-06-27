@@ -173,9 +173,9 @@ public class TimesheetGenerator {
             writer = new FileWriter("vykaz.csv");
             CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withDelimiter(';'));
             if (countLoggedWork) {
-                csv.printRecord("Datum", "Èinnost", "Hodin", null, "Zalogovaný èas");
+                csv.printRecord("Datum", "Cinnost", "Hodin", null, "Zalogovany cas");
             } else {
-                csv.printRecord("Datum", "Èinnost", "Hodin");
+                csv.printRecord("Datum", "Cinnost", "Hodin");
             }
             Date inMonth = DateUtils.addMonths(startDate, 1);
             if (inMonth.after(new Date())) {
