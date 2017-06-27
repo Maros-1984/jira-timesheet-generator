@@ -1,14 +1,9 @@
 package com.vranec.jira;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.apache.commons.lang.time.DateUtils;
-
 import net.rcarz.jiraclient.Issue;
-import net.rcarz.jiraclient.WorkLog;
 
 /**
  * Issues statistics for one date in calendar.
@@ -24,25 +19,14 @@ public class IssuesStats {
     /**
      * Add an issue to this date statistics.
      * 
-     * @param date
-     *            Date for determining the logged seconds.
      * @param issue
      *            Issue to be added.
-     * @param username
-     *            Username to find out logged work.
      */
-    public void addIssue(Date date, Issue issue, String username) {
+    public void addIssue(Issue issue) {
         if (issues.contains(issue.getKey())) {
             return;
         }
         issues.add(issue.getKey());
-        for (WorkLog workLog : issue.getWorkLogs()) {
-            if (workLog.getAuthor().getName().equals(username)) {
-                if (date.equals(DateUtils.truncate(workLog.getStarted(), Calendar.DATE))) {
-                    seconds += workLog.getTimeSpentSeconds();
-                }
-            }
-        }
     }
 
     /**

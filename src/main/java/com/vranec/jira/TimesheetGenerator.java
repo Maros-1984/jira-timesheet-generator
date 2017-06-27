@@ -10,6 +10,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -28,16 +30,15 @@ import net.rcarz.jiraclient.JiraException;
 /**
  * Generates timesheets from JIRA changelogs of tickets updated or watched by
  * current user.
- * 
+ *
  * @author Maros Vranec
  */
 public class TimesheetGenerator {
     /**
      * Starting point of the application.
-     * 
+     *
      * @param args
-     * @throws Exception
-     *             In case something went terribly wrong.
+     * @throws Exception In case something went terribly wrong.
      */
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
@@ -81,37 +82,32 @@ public class TimesheetGenerator {
 
     /**
      * Parses JIRA timesheets using JIRA REST API.
-     * 
-     * @param username
-     *            Username for filtering.
-     * @param startDate
-     *            Starting date to start parsing.
-     * @param jira
-     *            JIRA REST API client.
+     *
+     * @param username        Username for filtering.
+     * @param startDate       Starting date to start parsing.
+     * @param jira            JIRA REST API client.
      * @param countLoggedWork
      * @return Timesheets based on JIRAs' changelogs.
-     * @throws JiraException
-     *             In case anything went wrong.
+     * @throws JiraException In case anything went wrong.
      */
     private static Map<Date, IssuesStats> parseTimesheet(String username, Date startDate, JiraClient jira,
-            boolean countLoggedWork) throws JiraException {
-        Map<Date, IssuesStats> timesheet = new HashMap<Date, IssuesStats>();
+                                                         boolean countLoggedWork) throws JiraException {
+        ConcurrentMap<Date, IssuesStats> timesheet = new ConcurrentHashMap<>();
         String jql = "updated >= '" + new SimpleDateFormat("yyyy-M-d").format(startDate) + "' and (watcher = "
-                + username + " or status changed by " + username + ")";
+                + "currentUser()" + " or status changed by " + "currentUser()" + ")";
         System.out.println("Searching for issues by JQL: " + jql + "...");
-        SearchResult result = jira.searchIssues(jql, countLoggedWork ? "*all,-comment" : "summary", "changelog", 1000,
+        SearchResult result = jira.searchIssues(jql, "summary,comment", 1000,
                 0);
 
         System.out.print("Parsing ");
         for (Issue issue : result.issues) {
+            issue = jira.getIssue(issue.getKey(), "summary", "changelog");
             System.out.print(issue + " ");
             for (ChangeLogEntry entry : issue.getChangeLog().getEntries()) {
-                if (entry.getAuthor().getName().equals(username)) {
+                if (entry.getAuthor().getName().equals(username.split("@")[0])) {
                     Date date = DateUtils.truncate(entry.getCreated(), Calendar.DATE);
-                    if (!timesheet.containsKey(date)) {
-                        timesheet.put(date, new IssuesStats());
-                    }
-                    timesheet.get(date).addIssue(date, issue, username);
+                    timesheet.putIfAbsent(date, new IssuesStats());
+                    timesheet.get(date).addIssue(issue);
                 }
             }
         }
@@ -121,18 +117,15 @@ public class TimesheetGenerator {
     /**
      * Prepares JIRA REST API client. BEWARE: Bypasses SSL certificate
      * verification, trusts even fake jira.abank.cz (boo hoo).
-     * 
-     * @param username
-     *            Username used for login.
-     * @param password
-     *            Password used for login.
+     *
+     * @param username Username used for login.
+     * @param password Password used for login.
      * @return JIRA REST API client.
-     * @throws Exception
-     *             In case anything went wrong.
+     * @throws Exception In case anything went wrong.
      */
     private static JiraClient prepareJiraClient(String username, String password) throws Exception {
         BasicCredentials creds = new BasicCredentials(username, password);
-        JiraClient jira1 = new JiraClient("https://jira.abank.cz/", creds);
+        JiraClient jira1 = new JiraClient("https://monetamoneybank.atlassian.net/", creds);
         Field field = jira1.getClass().getDeclaredField("restclient");
         field.setAccessible(true);
         Object restClient = field.get(jira1);
@@ -154,20 +147,15 @@ public class TimesheetGenerator {
 
     /**
      * Saves timesheets to CSV.
-     * 
-     * @param startDate
-     *            Start date of the timesheets.
-     * @param timesheet
-     *            Timesheets themselves.
-     * @param countLoggedWork
-     *            Whether to count the logged work per day.
-     * @param username
-     *            Username making the timesheets.
-     * @throws IOException
-     *             In case writing CSV goes wrong.
+     *
+     * @param startDate       Start date of the timesheets.
+     * @param timesheet       Timesheets themselves.
+     * @param countLoggedWork Whether to count the logged work per day.
+     * @param username        Username making the timesheets.
+     * @throws IOException In case writing CSV goes wrong.
      */
     private static void saveToCsv(Date startDate, Map<Date, IssuesStats> timesheet, boolean countLoggedWork,
-            String username) throws IOException {
+                                  String username) throws IOException {
         FileWriter writer = null;
         try {
             writer = new FileWriter("vykaz.csv");
