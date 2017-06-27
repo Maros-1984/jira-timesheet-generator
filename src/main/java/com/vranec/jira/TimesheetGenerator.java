@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang.time.DateUtils;
@@ -26,6 +28,11 @@ import net.rcarz.jiraclient.Issue;
 import net.rcarz.jiraclient.Issue.SearchResult;
 import net.rcarz.jiraclient.JiraClient;
 import net.rcarz.jiraclient.JiraException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * Generates timesheets from JIRA changelogs of tickets updated or watched by
@@ -33,16 +40,14 @@ import net.rcarz.jiraclient.JiraException;
  *
  * @author Maros Vranec
  */
+@Slf4j
+@Component
 public class TimesheetGenerator {
-    /**
-     * Starting point of the application.
-     *
-     * @param args
-     * @throws Exception In case something went terribly wrong.
-     */
-    public static void main(String[] args) throws Exception {
+    @PostConstruct
+    public void main() throws Exception {
+        String[] args = new String[] {};
         if (args.length < 2) {
-            System.err.println(
+            log.error(
                     "Usage: java -jar timesheet-generator.jar yourJiraUserName yourJiraPassword [month number, e.g. 10 for October, default is current month]");
             return;
         }
@@ -73,7 +78,7 @@ public class TimesheetGenerator {
             if (ex.getCause() != null)
                 System.err.println(ex.getCause().getMessage());
         } catch (IOException ex) {
-            System.err.println(ex.getMessage());
+            log.error(ex.getMessage());
 
             if (ex.getCause() != null)
                 System.err.println(ex.getCause().getMessage());
