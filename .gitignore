@@ -7,3 +7,5 @@
 .gradle
 .idea
 /timesheet-generator.properties
+/out/
+*.iml

@@ -16,6 +16,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import net.rcarz.jiraclient.Issue.SearchResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -28,6 +29,7 @@ import javax.annotation.PostConstruct;
  */
 @Slf4j
 @Component
+@Order(0)
 public class TimesheetGenerator {
     @Autowired
     private Configuration configuration;

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import sun.misc.IOUtils;
 
@@ -15,18 +16,27 @@ import java.nio.file.Files;
 @Slf4j
 @Getter
 @Component
+@Order(1)
 @PropertySource(value = "file:timesheet-generator.properties", ignoreResourceNotFound = true)
 public class Configuration {
-    @Value("${jira.url}")
+    @Value("${jira.url:}")
     private String jiraUrl;
-    @Value("${jira.username}")
+    @Value("${jira.username:}")
     private String jiraUsername;
-    @Value("${jira.password}")
+    @Value("${jira.password:}")
     private String jiraPassword;
-    @Value("${month.detection.subtract.days}")
+    @Value("${month.detection.subtract.days:15}")
     private int monthDetectionSubtractDays;
-    @Value("${ignore.invalid.server.certificate}")
+    @Value("${ignore.invalid.server.certificate:false}")
     private boolean ignoreInvalidServerCertificate;
+    @Value("${proxy.url:}")
+    private String proxyUrl;
+    @Value("${proxy.port:0}")
+    private int proxyPort;
+    @Value("${proxy.username:}")
+    private String proxyUsername;
+    @Value("${proxy.password:}")
+    private String proxyPassword;
 
     @PostConstruct
     public void createConfigurationFileIfNotExists() throws IOException {
