@@ -29,7 +29,7 @@ class CsvExporter {
         try {
             writer = new FileWriter("vykaz.csv");
             CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withDelimiter(';'));
-            csv.printRecord("Datum", "Cinnost", "Hodin");
+            csv.printRecord("Date", "JIRA tasks");
             LocalDate inMonth = startDate.plusMonths(1);
             if (inMonth.isAfter(LocalDate.now())) {
                 inMonth = LocalDate.now();
@@ -43,8 +43,6 @@ class CsvExporter {
                     csv.print(issues.getIssues());
                     csv.print(8);
                 } else {
-                    csv.print(null);
-                    csv.print(null);
                     csv.print(null);
                     csv.print(null);
                 }
