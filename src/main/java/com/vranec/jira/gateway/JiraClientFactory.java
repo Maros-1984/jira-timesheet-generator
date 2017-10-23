@@ -1,5 +1,6 @@
-package com.vranec.jira;
+package com.vranec.jira.gateway;
 
+import com.vranec.configuration.ConfigurationFromPropertiesFile;
 import net.rcarz.jiraclient.BasicCredentials;
 import net.rcarz.jiraclient.RestClient;
 import org.apache.http.HttpHost;
@@ -10,16 +11,17 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 
-@org.springframework.context.annotation.Configuration
+@Configuration
 public class JiraClientFactory {
     @Autowired
-    private Configuration configuration;
+    private ConfigurationFromPropertiesFile configuration;
 
     @Bean
     CustomJiraClient getCustomJiraClient() throws UnrecoverableKeyException, NoSuchAlgorithmException,

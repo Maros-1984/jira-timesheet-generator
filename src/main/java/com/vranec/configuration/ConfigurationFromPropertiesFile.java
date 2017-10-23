@@ -1,12 +1,12 @@
-package com.vranec.jira;
+package com.vranec.configuration;
 
+import com.vranec.timesheet.generator.Configuration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import sun.misc.IOUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -18,7 +18,7 @@ import java.nio.file.Files;
 @Component
 @Order(1)
 @PropertySource(value = "file:timesheet-generator.properties", ignoreResourceNotFound = true)
-public class Configuration {
+public class ConfigurationFromPropertiesFile implements Configuration {
     @Value("${jira.url:}")
     private String jiraUrl;
     @Value("${jira.username:}")
