@@ -23,13 +23,13 @@ public class ConfigurationFromPropertiesFile implements Configuration {
     private String jiraUrl;
     @Value("${jira.username:}")
     private String jiraUsername;
-    @Value("${jira.password:}")
+       @Value("${jira.password:}")
     private String jiraPassword;
-    @Value("${month.detection.subtract.days:15}")
+       @Value("${month.detection.subtract.days:15}")
     private int monthDetectionSubtractDays;
     @Value("${ignore.invalid.server.certificate:false}")
     private boolean ignoreInvalidServerCertificate;
-    @Value("${proxy.url:}")
+       @Value("${proxy.url:}")
     private String proxyUrl;
     @Value("${proxy.port:0}")
     private int proxyPort;
