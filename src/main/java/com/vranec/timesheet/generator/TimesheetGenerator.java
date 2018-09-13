@@ -30,9 +30,9 @@ public class TimesheetGenerator {
 
     private List<TasksForDay> parseTimesheetFrom(LocalDate startDate) {
         Iterable<Task> tasks = taskSource.getTasks(startDate);
-        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+        LocalDate endDate = startDate.plusMonths(1);
         if (endDate.isAfter(now())) {
-            endDate = now();
+            endDate = now().plusDays(1);
         }
         List<TasksForDay> tasksForDays = new ArrayList<>();
         ConcurrentMap<LocalDate, TasksForDay> timesheet = new ConcurrentHashMap<>();
